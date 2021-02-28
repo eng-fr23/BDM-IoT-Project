@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+  slave1:
+    image: effeerre/hadoop
+    ports:
+      - 9864:9864
+    networks:
+      - hadoop_network
+    stdin_open: true
+    tty: true
+
+  slave2:
+    image: effeerre/hadoop
+    ports:
+      - 9863:9863
+    networks:
+      - hadoop_network
+    stdin_open: true
+    tty: true
+
+  slave3:
+    image: effeerre/hadoop
+    ports:
+      - 9862:9862
+    networks:
+      - hadoop_network
+    stdin_open: true
+    tty: true
+
+  master:
+    image: effeerre/hadoop
+    ports:
+      - 9870:9870
+    networks:
+      - hadoop_network
+    volumes:
+      - ./app:/mapred_app
+    stdin_open: true
+    tty: true
+
+networks:
+    hadoop_network:
+        driver: bridge
