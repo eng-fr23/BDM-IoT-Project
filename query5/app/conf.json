@@ -1,0 +1,5 @@
+{
+    "targetFile": "covid19_tweets.csv",
+    "dbAddr": "spark-mongo",
+    "dbName": "most_tweets"
+}
