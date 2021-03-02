@@ -29,7 +29,7 @@ services:
     tty: true
 
   master:
-    image: effeerre/hadoop
+    build: ./app
     ports:
       - 9870:9870
     networks:

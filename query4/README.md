@@ -1,9 +1,11 @@
 ### Building the query4 project
 
-On Intellij, Project Structure -> Artifacts -> JAR
+Build the project with maven clean install, use the generated jar with hadoop or use the compose 
+configuration present with the prebuilt jar:
 
-then include all modules, specify main/java/resources as the manifest directory, 
-and build via Build -> Build Artifacts -> Build
-
-Move the jar into dist, download the csv dataset into dist, run the docker-compose,
-ssh into the master, and run the hadoop_mr.sh script.
+```bash
+cd dist
+docker-compose up -d
+docker exec -it dist_master_1 bash
+./hadoop_mr.sh
+```
