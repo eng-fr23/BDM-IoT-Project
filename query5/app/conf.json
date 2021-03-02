@@ -1,5 +1,7 @@
 {
     "targetFile": "covid19_tweets.csv",
     "dbAddr": "spark-mongo",
-    "dbName": "most_tweets"
+    "dbPort": 27017,
+    "dbName": "most_tweets",
+    "dbCollection": "by_location"
 }

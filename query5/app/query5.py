@@ -3,16 +3,18 @@
 - Query: For each user location, find the day that had the most tweets about covid
 """
 
-from pyspark import sql
 from operator import add
+from pyspark import sql
 import datetime
+import pymongo
 import json
 
-# Indexes in csv
 
+# Indexes in csv
 location = 1
 date = 8
 
+# Init configurations
 with open("conf.json", "r") as app_conf_file:
     app_conf = json.loads(app_conf_file.read())
 
@@ -31,26 +33,32 @@ def day_from_date(fmt_date):
     return fmt_date.split(" ")[0]
 
 
+def send_rdd(rdd_partition):
+    db_conf_str = "mongodb://%s:%d" % (app_conf["dbAddr"], app_conf["dbPort"])
+    collection = pymongo.MongoClient(db_conf_str)[app_conf["dbName"]][app_conf["dbCollection"]]
+    for elem in rdd_partition:
+        collection.insert_one({"location": elem[0], "day": elem[1]})
+
+
 def main():
-    db_conf_str = "mongodb://%s/%s" % (app_conf["dbAddr"], app_conf["dbName"])
     sql_ses = sql.SparkSession\
         .builder\
         .appName("MostTweetsByLocation")\
         .master("local")\
-        .config("spark.mongodb.output.uri", db_conf_str)\
         .getOrCreate()
 
-    rdd = sql_ses.read.csv(app_conf["targetFile"], header=True).rdd.map(tuple)\
+    sql_ses\
+        .read\
+        .csv(app_conf["targetFile"], header=True)\
+        .rdd\
+        .map(tuple)\
         .filter(lambda line_elems: validate_date(line_elems[date]))\
         .map(lambda line_elems: ((line_elems[location], day_from_date(line_elems[date])), 1))\
         .reduceByKey(add)\
         .map(lambda tuple_elems: (tuple_elems[0][0], (tuple_elems[0][1], tuple_elems[1])))\
         .reduceByKey(lambda x, y: x if x[1] > y[1] else y)\
-        .map(lambda elems: (elems[0], elems[1][0])).take(100)
-
-    sql_ses.createDataFrame(rdd, schema=["location", "day"])\
-        .write\
-        .save()
+        .map(lambda elems: (elems[0], elems[1][0]))\
+        .foreachPartition(send_rdd)
 
 
 if __name__ == "__main__":
