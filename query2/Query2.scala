@@ -91,6 +91,10 @@ object Query2 extends App {
 
   val context = new SparkContext("local[*]","query2")
 
+  val hadoopConfig = context.hadoopConfiguration
+
+  hadoopConfig.set("fs.file.impl", classOf[org.apache.hadoop.fs.LocalFileSystem].getName)
+
   val startingRDD = context.textFile(path)
 
   val filtered = startingRDD.filter(!_.equals(header)).map(_.split(",")).map(parseLines).filter(filterTuples)//.filter(filterDays)
