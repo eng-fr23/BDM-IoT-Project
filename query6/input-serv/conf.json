@@ -1,5 +1,4 @@
 {
-    "recv-addr": "localhost",
     "recv-port": 6666,
-    "dataset": "data/us_counties_covid19_daily.csv"
+    "dataset": "data/us_states_covid19_daily.csv"
 }

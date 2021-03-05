@@ -12,6 +12,9 @@ services:
     build: ./app
     ports:
       - 6666:6666
+    depends_on:
+      - spark-sender
+      - spark-mongo
     networks:
       - spark-net
       - mongo
