@@ -5,8 +5,6 @@ services:
     build: ./input-serv
     networks:
       - spark-net
-    depends_on:
-      - spark-master
 
   spark-master:
     build: ./app
@@ -25,7 +23,12 @@ services:
       - 27017:27017
     networks:
       - mongo
+    volumes:
+      - mongo-data:/data/db
 
+volumes:
+  mongo-data:
+    external: false
 
 networks:
   spark-net:

@@ -46,12 +46,13 @@ def main():
     ctx = SparkContext(parallelismDegree, appName)
     sctx = StreamingContext(ctx, batchInterval)
 
-    data = sctx.socketTextStream(hostname="localhost", port=conf["recv-port"])\
+    data = sctx.socketTextStream(hostname=conf["recvAddr"], port=conf["recvPort"])\
         .map(lambda line: line.split(","))\
         .map(lambda splitted: ((splitted[state], month_from_date(splitted[date])), splitted[hospitalized_cum]))\
         .filter(lambda line_tuple: validate_int(line_tuple[1]))\
         .map(lambda line_tuple: (line_tuple[0], int(line_tuple[1])))\
-        .reduceByKey(operator.add)
+        .reduceByKey(operator.add)\
+        .map(lambda line_tuple: (line_tuple[0][0], line_tuple[0][1], line_tuple[1]))
 
     # foreachrdd
 
