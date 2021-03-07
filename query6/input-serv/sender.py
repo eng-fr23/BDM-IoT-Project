@@ -24,9 +24,8 @@ def main():
     try:
         sock.bind(("", conf["recv-port"]))
         sock.listen()
-        while True:
-            conn, addr = sock.accept()
-            threading.Thread(target=init_sender, args=(conn,)).start()
+        conn, addr = sock.accept()
+        threading.Thread(target=init_sender, args=(conn,)).start()
     except KeyboardInterrupt:
         print("Bye")
     finally:
