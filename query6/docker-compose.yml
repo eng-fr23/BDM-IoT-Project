@@ -8,8 +8,6 @@ services:
 
   spark-master:
     build: ./app
-    ports:
-      - 6666:6666
     depends_on:
       - spark-sender
       - spark-mongo
