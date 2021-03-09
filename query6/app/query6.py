@@ -91,6 +91,8 @@ def main():
     sctx = StreamingContext(ctx, batchInterval)
 
     # Recv data, calculate total hospitalized by month
+    # The following acquires streamed data from the text socket, interprets it as csv
+    # and computes the total number of cases by month, to then pass the info to the extract_diff function
     sctx.socketTextStream(hostname=conf["recvAddr"], port=conf["recvPort"]) \
         .map(lambda line: line.split(",")) \
         .map(lambda splitted: ((splitted[state], month_from_date(splitted[date])), splitted[hospitalized_cum])) \
