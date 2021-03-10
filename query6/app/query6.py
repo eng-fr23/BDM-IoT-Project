@@ -24,21 +24,36 @@ batchInterval = conf["batchInterval"]
 
 
 def get_sparksession_instance(spark_conf):
+    """
+    Gets a reference to the spark session singleton instance, or creates one it if it's not
+    yet available. This is taken from the official spark streaming repository on github.
+    :param spark_conf: the configuration related to the rdd to manipulate
+    :return: the spark session singleton instance
+    """
     # from the official spark examples repo
     if "sparkSessionSingletonInstance" not in globals():
         globals()["sparkSessionSingletonInstance"] = SparkSession\
             .builder\
             .config(conf=spark_conf)\
             .getOrCreate()
-    return globals()['sparkSessionSingletonInstance']
+    return globals()["sparkSessionSingletonInstance"]
 
 
 def month_from_date(fmt_date):
-    # date fmt is yyyymmdd
+    """
+    Extracts the months from a date contained in a row of the dataset
+    :param fmt_date: date has the following format, yyyymmdd
+    :return: string representing the month in the mm format
+    """
     return fmt_date[4:6]
 
 
 def send_rdd(rdd_partition):
+    """
+    Writes every row instance of an RDD partition onto a mongodb collection.
+    :param rdd_partition: the partition to be written
+    :return: None
+    """
     db_conf_str = "mongodb://%s:%d" % (conf["dbAddr"], conf["dbPort"])
     collection = pymongo.MongoClient(db_conf_str)[conf["dbName"]][conf["dbCollection"]]
     for elem in rdd_partition:
@@ -46,6 +61,11 @@ def send_rdd(rdd_partition):
 
 
 def validate_int(n):
+    """
+    Checks that the passed string is representing an integer
+    :param n: the integer
+    :return: bool
+    """
     try:
         int(n)
     except ValueError:
@@ -55,7 +75,13 @@ def validate_int(n):
 
 def extract_diff(time, rdd):
     """
-    Transform to dataframe to compute monthly increase
+    Extracts the increase in hospitalized cases month by month, from an RDD with the following structure:
+     -------------------------------
+    | State | Month | Hospitalized |
+     ------------------------------
+    :param time: not used but required from the DStream.foreachRDD function
+    :param rdd: the rdd to transform
+    :return: None
     """
     try:
         if rdd.isEmpty():
@@ -67,9 +93,12 @@ def extract_diff(time, rdd):
         df = spark.createDataFrame(rdd, ["state", "month", "hospitalized"])
         win_conf = Window.partitionBy().orderBy("state", "month")
 
-        # add two columns, the first by lagging one row foreach entry so to catch
-        # the hospitalized count previous month, the second one just computes the difference
-        # (aka the increase, possibly negative) considering the null corner case too
+        # add two columns, the first one by lagging one row for each entry, so to catch
+        # the hospitalized count of the previous month; the second one just computes the
+        # difference (the increase, possibly negative) considering the null corner case too
+        #  ---------------------------------------------------------------------
+        # | State | Month | Hospitalized | Hospitalized (lag by one) | Increase |
+        #  ---------------------------------------------------------------------
         df = df.withColumn("prev_hospitalized", lag(df.hospitalized).over(win_conf))
         df = df.withColumn("increment", when(
                 isnull(df.hospitalized - df.prev_hospitalized), 0)
@@ -77,7 +106,7 @@ def extract_diff(time, rdd):
             )
 
         # back to an rdd to compute the max among the increases by state, then save it onto
-        # a mongodb database instance
+        # a mongodb database instance, 0 is the state index, 4 is the increase index
         df.rdd\
             .map(lambda line: (line[0], line[4]))\
             .reduceByKey(max)\
@@ -90,8 +119,8 @@ def main():
     ctx = SparkContext(parallelismDegree, appName)
     sctx = StreamingContext(ctx, batchInterval)
 
-    # Recv data, calculate total hospitalized by month
-    # The following acquires streamed data from the text socket, interprets it as csv
+    # Receive data and calculate total hospitalized by month
+    # The following acquires data streamed from the input service through the text socket, interprets it as csv
     # and computes the total number of cases by month, to then pass the info to the extract_diff function
     sctx.socketTextStream(hostname=conf["recvAddr"], port=conf["recvPort"]) \
         .map(lambda line: line.split(",")) \
