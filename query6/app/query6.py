@@ -10,11 +10,12 @@ import operator
 import pymongo
 import json
 
-# Indexes in csv
+# Csv indexes
 date = 0
 state = 1
 hospitalized_cum = 9
 
+# Init configurations
 with open("conf.json", "r") as conf_file:
     conf = json.loads(conf_file.read())
 
@@ -26,7 +27,7 @@ batchInterval = conf["batchInterval"]
 def get_sparksession_instance(spark_conf):
     """
     Gets a reference to the spark session singleton instance, or creates one it if it's not
-    yet available. This is taken from the official spark streaming repository on github.
+    available yet. This is taken from the official spark streaming repository on github.
     :param spark_conf: the configuration related to the rdd to manipulate
     :return: the spark session singleton instance
     """
@@ -42,22 +43,10 @@ def get_sparksession_instance(spark_conf):
 def month_from_date(fmt_date):
     """
     Extracts the months from a date contained in a row of the dataset
-    :param fmt_date: date has the following format, yyyymmdd
-    :return: string representing the month in the mm format
+    :param fmt_date: fmt_date has the following format, yyyymmdd
+    :return: a string representing the month in the mm format
     """
     return fmt_date[4:6]
-
-
-def send_rdd(rdd_partition):
-    """
-    Writes every row instance of an RDD partition onto a mongodb collection.
-    :param rdd_partition: the partition to be written
-    :return: None
-    """
-    db_conf_str = "mongodb://%s:%d" % (conf["dbAddr"], conf["dbPort"])
-    collection = pymongo.MongoClient(db_conf_str)[conf["dbName"]][conf["dbCollection"]]
-    for elem in rdd_partition:
-        collection.insert_one({"state": elem[0], "monthly_increase": elem[1]})
 
 
 def validate_int(n):
@@ -71,6 +60,18 @@ def validate_int(n):
     except ValueError:
         return False
     return True
+
+
+def write_to_mongo(rdd_partition):
+    """
+    Writes every row instance of an RDD partition onto a mongodb collection.
+    :param rdd_partition: the partition to be written
+    :return: None
+    """
+    db_conf_str = "mongodb://%s:%d" % (conf["dbAddr"], conf["dbPort"])
+    collection = pymongo.MongoClient(db_conf_str)[conf["dbName"]][conf["dbCollection"]]
+    for elem in rdd_partition:
+        collection.insert_one({"state": elem[0], "monthly_increase": elem[1]})
 
 
 def extract_diff(time, rdd):
@@ -110,7 +111,7 @@ def extract_diff(time, rdd):
         df.rdd\
             .map(lambda line: (line[0], line[4]))\
             .reduceByKey(max)\
-            .foreachPartition(send_rdd)
+            .foreachPartition(write_to_mongo)
     finally:
         pass
 
@@ -119,9 +120,10 @@ def main():
     ctx = SparkContext(parallelismDegree, appName)
     sctx = StreamingContext(ctx, batchInterval)
 
-    # Receive data and calculate total hospitalized by month
-    # The following acquires data streamed from the input service through the text socket, interprets it as csv
-    # and computes the total number of cases by month, to then pass the info to the extract_diff function
+    # Receive data and calculate total hospitalized by month.
+    # The following function calls are used to acquire data streamed from the input service through
+    # the text socket, interprets it as csv and computes the total number of cases by month, to then
+    # pass the info to the extract_diff function.
     sctx.socketTextStream(hostname=conf["recvAddr"], port=conf["recvPort"]) \
         .map(lambda line: line.split(",")) \
         .map(lambda splitted: ((splitted[state], month_from_date(splitted[date])), splitted[hospitalized_cum])) \
