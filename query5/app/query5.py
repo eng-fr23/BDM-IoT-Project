@@ -65,7 +65,7 @@ def main():
         .master("local")\
         .getOrCreate()
 
-    # Loading a csv with the header=True argument allows to use the first row as the schema.
+    # Loading a csv with the header=True argument makes it possible wto use the first row as the schema.
     # The dataframe is then transformed into an RDD to recover the normal SparkContext capabilities,
     # through which some transformations are made upon the dataset, namely the map/reduceByKey used
     # to count number of tweets, and the max computation. The data is then saved into a mongodb collection.

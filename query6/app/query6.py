@@ -120,9 +120,9 @@ def main():
     ctx = SparkContext(parallelismDegree, appName)
     sctx = StreamingContext(ctx, batchInterval)
 
-    # Receive data and calculate total hospitalized by month.
+    # Receive data and calculate the total hospitalized by month count.
     # The following function calls are used to acquire data streamed from the input service through
-    # the text socket, interprets it as csv and computes the total number of cases by month, to then
+    # the text socket, interpret it as csv and compute the total number of cases by month, to then
     # pass the info to the extract_diff function.
     sctx.socketTextStream(hostname=conf["recvAddr"], port=conf["recvPort"]) \
         .map(lambda line: line.split(",")) \
