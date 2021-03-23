@@ -1,6 +1,6 @@
 ### Building the query5 project
 
-The application can be started through the spark-submit utility in a
+The application is started through the spark-submit utility in a
 premade spark container, interfacing with a mongodb container in a docker network.
 
 The mongo container is exposed on the 27017 tcp port.

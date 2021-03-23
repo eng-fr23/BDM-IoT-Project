@@ -1,0 +1,4 @@
+{
+    "recv-port": 6666,
+    "dataset": "data/us_states_covid19_daily.csv"
+}

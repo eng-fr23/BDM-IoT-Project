@@ -33,7 +33,7 @@ RACO FRANCESCO, MARCELLO GIANMARCO
 
 **QUERY 6**
 
-- Dataset: https://www.kaggle.com/sudalairajkumar/covid19-in-usa?select=us_covid19_daily.csv
+- Dataset: https://www.kaggle.com/sudalairajkumar/covid19-in-usa?select=us_states_covid19_daily.csv
 - Query: For each state, find the month that had the highest increase in hospitalized patients
 
 

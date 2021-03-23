@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  spark-sender:
+    build: ./input-serv
+    networks:
+      - spark-net
+
+  spark-master:
+    build: ./app
+    depends_on:
+      - spark-sender
+      - spark-mongo
+    networks:
+      - spark-net
+      - mongo
+
+  spark-mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    networks:
+      - mongo
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+    external: false
+
+networks:
+  spark-net:
+  mongo:

@@ -1,0 +1,11 @@
+{
+    "appName": "HighestIncreaseByState",
+    "parallelismDegree": 2,
+    "batchInterval": 1,
+    "recvAddr": "spark-sender",
+    "recvPort": 6666,
+    "dbAddr": "spark-mongo",
+    "dbPort": 27017,
+    "dbName": "query6",
+    "dbCollection": "highest_increase"
+}
