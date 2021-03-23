@@ -87,7 +87,7 @@ object Query2 extends App {
 
   val durations = Array(0,31,29,31,30,31,30,31,31,30,31,30,31)
 
-  val path = "/home/fran22/Scaricati/covid_19_data.csv"
+  val path = args(0)
 
   val context = new SparkContext("local[*]","query2")
 
